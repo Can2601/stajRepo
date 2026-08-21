@@ -13,19 +13,6 @@
 #include <QCoreApplication>
 #include <QStandardPaths>
 
-#include "chacha20.h"
-
-// ── ChaCha20 GİZLİ ANAHTARI ──────────────────────────────────────────
-// Bu anahtar login uygulamasında BİREBİR AYNI olmalı, yoksa şifre çözülemez.
-// Şu aşamada öğrenme amaçlı kod içine sabit yazıyoruz.
-// 32 byte (256 bit) olmak zorunda.
-static const uint8_t LICENSE_KEY[32] = {
-    0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
-    0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c,
-    0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-    0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
-};
-
 // Login uygulamasıyla PAYLAŞILAN klasör.
 // Login app da lisansları doğrularken tam olarak bu klasörden okumalı:
 // Windows'ta genelde: C:/Users/<kullanıcı>/LicenseShared/licenses
@@ -50,31 +37,13 @@ public:
         QDateTime createdAt = QDateTime::currentDateTime();
         QDateTime expiryDate = createdAt.addDays(validDays);
 
-        // 1) Önce normal (düz metin) lisans verisini JSON olarak hazırla.
+        // ŞİFRELEME YOK — bu branch bilinçli olarak açık (plain text) yazıyor.
+        // Şifreli sürüm için "chacha20-encryption" branch'ine bak.
         QJsonObject license;
         license["id"] = id;
         license["password"] = password;
         license["createdAt"] = createdAt.toString(Qt::ISODate);
         license["expiryDate"] = expiryDate.toString(Qt::ISODate);
-        QByteArray plainBytes = QJsonDocument(license).toJson(QJsonDocument::Compact);
-
-        // 2) Her lisans için RASTGELE bir nonce üret (gizli değil, sadece tek kullanımlık).
-        //    Aynı nonce+key ile iki farklı veri asla şifrelenmemeli.
-        uint8_t nonce[12];
-        for (int i = 0; i < 12; ++i) {
-            nonce[i] = static_cast<uint8_t>(QRandomGenerator::global()->bounded(256));
-        }
-
-        // 3) ChaCha20 ile şifrele.
-        QByteArray cipherBytes = ChaCha20::crypt(plainBytes, LICENSE_KEY, nonce);
-
-        // 4) Şifreli veriyi + nonce'u hex olarak sarmalayan dış JSON'u oluştur.
-        //    Login uygulaması: nonce'u ve cipher'ı hex'ten çözüp,
-        //    AYNI ChaCha20::crypt fonksiyonuyla (aynı key) tekrar XOR'layarak
-        //    orijinal düz metni geri elde eder.
-        QJsonObject envelope;
-        envelope["nonce"] = QString(QByteArray(reinterpret_cast<const char*>(nonce), 12).toHex());
-        envelope["cipher"] = QString(cipherBytes.toHex());
 
         // Kendi klasörümüz yerine login app ile PAYLAŞILAN klasöre yazıyoruz.
         QDir dir(SHARED_LICENSE_FOLDER);
@@ -83,7 +52,7 @@ public:
         }
         QString filePath = dir.filePath(id + ".json");
 
-        QJsonDocument doc(envelope);
+        QJsonDocument doc(license);
         QFile file(filePath);
         bool success = false;
         if (file.open(QIODevice::WriteOnly)) {

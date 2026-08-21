@@ -8,8 +8,7 @@ SOURCES += \
         main.cpp
 
 HEADERS += \
-        licensemanager.h \
-        chacha20.h
+        licensemanager.h
 
 RESOURCES += qml.qrc
 
