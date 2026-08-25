@@ -10,25 +10,44 @@ ApplicationWindow {
     visible: true
     title: qsTr("Application – Login")
 
-    // ── Background ────────────────────────────────────────────────
     color: "#0D1117"
 
-    // ── Login page ────────────────────────────────────────────────
-    LoginPage {
-        id: loginPage
+    // ── Stack navigation ──────────────────────────────────────────────────────
+    StackView {
+        id: stack
         anchors.fill: parent
 
-        onLoginSucceeded: function(userId) {
-            // TODO: navigate to your main application screen.
-            // Example:
-            //   window.title = qsTr("Application – %1").arg(userId)
-            //   mainStack.push(dashboardComponent)
-            console.log("Login succeeded for user:", userId)
-        }
+        // Start with the login page
+        initialItem: loginComponent
+    }
 
-        onLoginFailed: function(reason) {
-            // Already handled inside LoginPage (error banner shown).
-            console.log("Login failed:", reason)
+    // ── Login page ────────────────────────────────────────────────────────────
+    Component {
+        id: loginComponent
+
+        LoginPage {
+            onLoginSucceeded: function(userId) {
+                window.title = qsTr("Application – %1").arg(userId)
+                stack.push(welcomeComponent, { "userId": userId },
+                           StackView.PushTransition)
+            }
+
+            onLoginFailed: function(reason) {
+                // Already handled inside LoginPage (error banner shown).
+                console.log("Login failed:", reason)
+            }
+        }
+    }
+
+    // ── Welcome page ──────────────────────────────────────────────────────────
+    Component {
+        id: welcomeComponent
+
+        WelcomePage {
+            onLogoutRequested: {
+                window.title = qsTr("Application – Login")
+                stack.pop()
+            }
         }
     }
 }

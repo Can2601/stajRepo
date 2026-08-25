@@ -195,13 +195,13 @@ Item {
             return
         }
 
-        // ── TODO: replace with license check ──────────────────────
-        // var ok = LicenseAuth.validateCredentials(id, pwd)
-        // if (ok) loginPage.loginSucceeded(id)
-        // else    loginPage._errorText = LicenseAuth.lastError()
-        // ─────────────────────────────────────────────────────────
-        loginPage._errorText = qsTr("License validation is not yet configured.")
-        loginPage.loginFailed("not_configured")
+        // ── License validation via LicenseAuth (C++ backend) ──────────────
+        var ok = LicenseAuth.validateCredentials(id, pwd)
+        if (ok)
+            loginPage.loginSucceeded(id)
+        else
+            loginPage._errorText = LicenseAuth.lastError()
+        // ──────────────────────────────────────────────────────────────────
     }
 
     Component.onCompleted: idField.forceActiveFocus()
