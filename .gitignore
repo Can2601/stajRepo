@@ -27,3 +27,5 @@ CMakeLists.txt.user
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+temp.cpp
