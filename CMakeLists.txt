@@ -2,7 +2,13 @@ cmake_minimum_required(VERSION 3.16)
 
 project(testQtProject VERSION 0.1 LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ── libsodium ──────────────────────────────────────────────────────────────
+# Adjust this path if you move the library folder.
+set(SODIUM_ROOT "C:/Users/cmkak/Documents/libs/libsodium-win64"
+    CACHE PATH "Path to the libsodium installation")
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 
@@ -15,6 +21,9 @@ endif()
 
 qt_add_executable(apptestQtProject
     main.cpp
+    licenseauth.h       # Q_OBJECT – MOC must process this
+    crypto_utils.h
+    shared_license_key.h
 )
 
 qt_add_qml_module(apptestQtProject
@@ -22,11 +31,9 @@ qt_add_qml_module(apptestQtProject
     QML_FILES
         Main.qml
         LoginPage.qml
+        WelcomePage.qml
 )
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
 set_target_properties(apptestQtProject PROPERTIES
 #    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.apptestQtProject
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -35,8 +42,10 @@ set_target_properties(apptestQtProject PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+target_include_directories(apptestQtProject PRIVATE ${SODIUM_ROOT}/include)
 target_link_libraries(apptestQtProject
     PRIVATE Qt6::Quick
+    PRIVATE ${SODIUM_ROOT}/lib/libsodium.a
 )
 
 install(TARGETS apptestQtProject
