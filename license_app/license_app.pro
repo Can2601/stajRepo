@@ -9,9 +9,18 @@ SOURCES += \
 
 HEADERS += \
         licensemanager.h \
-        chacha20.h
+        shared_license_key.h
 
 RESOURCES += qml.qrc
+
+# ── libsodium ─────────────────────────────────────────────────────────────────
+# Link statically (libsodium.a) so no libsodium-26.dll is needed at runtime.
+SODIUM_ROOT = C:/Users/cmkak/Documents/libs/libsodium-win64
+
+INCLUDEPATH += $$SODIUM_ROOT/include
+LIBS        += $$SODIUM_ROOT/lib/libsodium.a
+win32: LIBS += -lpthread
+# ─────────────────────────────────────────────────────────────────────────────
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
