@@ -2,7 +2,6 @@ import QtQuick
 
 Item {
     id: welcomePage
-    anchors.fill: parent
 
     property string userId: ""
     signal logoutRequested()
