@@ -47,19 +47,22 @@ public:
         }
     }
 
-    // Called from QML: licenseManager.generateAndSave(365)
-    // Returns a map with: id, password, expiryDate, filePath, success, error
-    Q_INVOKABLE QVariantMap generateAndSave(int validDays = 365)
+    // Function that generates a license using custom user inputs from the UI
+    Q_INVOKABLE QVariantMap generateCustomLicense(QString id, QString password, QString expiryDateStr)
     {
         QVariantMap result;
+        QDateTime created = QDateTime::currentDateTime();
 
-        // 1. Generate license data
-        QString id         = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        QString password   = generatePassword();
-        QDateTime created  = QDateTime::currentDateTime();
-        QDateTime expiry   = created.addDays(validDays);
+        // Convert the string from the UI (format: "dd.MM.yyyy") to QDateTime
+        QDateTime expiry = QDateTime::fromString(expiryDateStr, "dd.MM.yyyy");
 
-        // 2. Build compact JSON plaintext
+        if (!expiry.isValid()) {
+            result["success"] = false;
+            result["error"] = "Invalid date format. Expected: dd.MM.yyyy";
+            return result;
+        }
+
+        // 1. Build compact JSON plaintext
         QJsonObject licenseJson;
         licenseJson["id"]          = id;
         licenseJson["password"]    = password;
@@ -67,13 +70,10 @@ public:
         licenseJson["expiryDate"]  = expiry.toString(Qt::ISODate);
         QByteArray plaintext = QJsonDocument(licenseJson).toJson(QJsonDocument::Compact);
 
-        // 3. Generate a random 24-byte nonce (XChaCha20 uses 24-byte nonces —
-        //    large enough to be safe with randombytes_buf, no counter needed)
+        // 2. Encrypt with XChaCha20-Poly1305 (Libsodium)
         unsigned char nonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
         randombytes_buf(nonce, sizeof(nonce));
 
-        // 4. Encrypt with XChaCha20-Poly1305
-        //    Output size = plaintext size + 16-byte Poly1305 tag
         size_t cipherLen = static_cast<size_t>(plaintext.size())
                            + crypto_aead_xchacha20poly1305_ietf_ABYTES;
         QByteArray cipherBuf(static_cast<int>(cipherLen), Qt::Uninitialized);
@@ -83,32 +83,27 @@ public:
             reinterpret_cast<unsigned char*>(cipherBuf.data()), &actualLen,
             reinterpret_cast<const unsigned char*>(plaintext.constData()),
             static_cast<unsigned long long>(plaintext.size()),
-            nullptr, 0,   // no additional data
-            nullptr,      // nsec — not used
-            nonce,
-            LICENSE_KEY
-        );
+            nullptr, 0, nullptr, nonce, LICENSE_KEY
+            );
 
         if (rc != 0) {
             result["success"] = false;
             result["error"]   = "Encryption failed (libsodium error)";
             return result;
         }
-
         cipherBuf.resize(static_cast<int>(actualLen));
 
-        // 5. Bundle: nonce | ciphertext+tag  →  base64
+        // 3. Bundle (nonce + ciphertext) and encode to base64
         QByteArray nonceBuf(reinterpret_cast<const char*>(nonce), sizeof(nonce));
         QByteArray bundle  = nonceBuf + cipherBuf;
         QString    b64     = QString::fromLatin1(bundle.toBase64());
 
-        // 6. Write envelope JSON
+        // 4. Write envelope JSON to disk
         QJsonObject envelope;
         envelope["bundle"] = b64;
 
         QDir dir(SHARED_LICENSE_FOLDER);
-        if (!dir.exists())
-            dir.mkpath(".");
+        if (!dir.exists()) dir.mkpath(".");
 
         QString filePath = dir.filePath(id + ".json");
         QFile   file(filePath);
@@ -119,29 +114,14 @@ public:
             success = true;
         }
 
+        // 5. Return results to QML
         result["success"]    = success;
         result["id"]         = id;
         result["password"]   = password;
         result["expiryDate"] = expiry.toString("dd.MM.yyyy");
         result["filePath"]   = filePath;
-        if (!success)
-            result["error"] = "Could not write license file to: " + filePath;
+        if (!success) result["error"] = "Could not write license file to: " + filePath;
 
-        return result;
-    }
-
-private:
-    QString generatePassword(int length = 16)
-    {
-        const QString chars =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
-        QString result;
-        result.reserve(length);
-        for (int i = 0; i < length; ++i) {
-            // Use libsodium's CSPRNG for password generation too
-            quint32 idx = randombytes_uniform(static_cast<uint32_t>(chars.length()));
-            result.append(chars.at(static_cast<int>(idx)));
-        }
         return result;
     }
 };
