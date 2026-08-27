@@ -93,23 +93,24 @@ public:
         }
         cipherBuf.resize(static_cast<int>(actualLen));
 
-        // 3. Bundle (nonce + ciphertext) and encode to base64
+        // 3. Bundle (nonce + ciphertext)
         QByteArray nonceBuf(reinterpret_cast<const char*>(nonce), sizeof(nonce));
         QByteArray bundle  = nonceBuf + cipherBuf;
-        QString    b64     = QString::fromLatin1(bundle.toBase64());
 
-        // 4. Write envelope JSON to disk
-        QJsonObject envelope;
-        envelope["bundle"] = b64;
+
+        // 4. Write raw binary data directly to the file
 
         QDir dir(SHARED_LICENSE_FOLDER);
         if (!dir.exists()) dir.mkpath(".");
 
-        QString filePath = dir.filePath(id + ".json");
-        QFile   file(filePath);
-        bool    success = false;
+        // Changed file extension to .lic to represent a raw license file
+        QString filePath = dir.filePath(id + ".lic");
+        QFile file(filePath);
+        bool success = false;
+
+        // QIODevice::WriteOnly writes the data in its raw binary format
         if (file.open(QIODevice::WriteOnly)) {
-            file.write(QJsonDocument(envelope).toJson(QJsonDocument::Indented));
+            file.write(bundle);
             file.close();
             success = true;
         }
