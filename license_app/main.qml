@@ -5,7 +5,7 @@ import QtQuick.Controls
 
 Window {
     width: 500
-    height: 460
+    height: 560
     visible: true
     title: qsTr("Lisans Üretici")
     color: "#f5f5f5"
@@ -79,16 +79,102 @@ Window {
             color: "#1a1a1a"
         }
 
-        TextField {
-            id: inputId
+        RowLayout {
             Layout.fillWidth: true
-            placeholderText: "Kullanıcı ID Girin"
+            spacing: 8
+
+            TextField {
+                id: inputId
+                Layout.fillWidth: true
+                placeholderText: "Kullanıcı ID Girin"
+                leftPadding: 12
+                background: Rectangle {
+                    radius: 8
+                    color: "#ffffff"
+                    border.color: parent.activeFocus ? "#4A90E2" : "#dddddd"
+                    border.width: parent.activeFocus ? 2 : 1
+                }
+            }
+
+            Button {
+                text: "🎲"
+                implicitWidth: 40
+                implicitHeight: 40
+                font.pixelSize: 18
+                padding: 0
+                onClicked: {
+                    let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+                    let res = ""
+                    let randomLength = Math.floor(Math.random() * 5) + 6
+                    for (let i = 0; i < randomLength; i++) {
+                        res += chars.charAt(Math.floor(Math.random() * chars.length))
+                    }
+                    inputId.text = res
+                    lastError = ""
+                }
+                background: Rectangle {
+                    radius: 8
+                    color: parent.hovered ? "#f0f4f8" : "#ffffff"
+                    border.color: parent.hovered ? "#4A90E2" : "#dddddd"
+                    border.width: 1
+                }
+            }
         }
 
-        TextField {
-            id: inputPassword
+        // --- PASSWORD INPUT AREA ---
+        RowLayout {
             Layout.fillWidth: true
-            placeholderText: "Lisans Şifresini Girin"
+            spacing: 8
+
+            TextField {
+                id: inputPassword
+                Layout.fillWidth: true
+                placeholderText: "Lisans Şifresini Girin"
+                leftPadding: 12
+                background: Rectangle {
+                    radius: 8
+                    color: "#ffffff"
+                    border.color: parent.activeFocus ? "#4A90E2" : "#dddddd"
+                    border.width: parent.activeFocus ? 2 : 1
+                }
+            }
+
+            Button {
+                text: "🎲"
+                implicitWidth: 40
+                implicitHeight: 40
+                font.pixelSize: 18
+                padding: 0
+                onClicked: {
+                    let upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                    let lower = "abcdefghijklmnopqrstuvwxyz"
+                    let num = "0123456789"
+                    let special = "!@#$%^&*_"
+                    let all = upper + lower + num + special
+
+                    let res = ""
+                    res += upper.charAt(Math.floor(Math.random() * upper.length))
+                    res += lower.charAt(Math.floor(Math.random() * lower.length))
+                    res += special.charAt(Math.floor(Math.random() * special.length))
+                    res += num.charAt(Math.floor(Math.random() * num.length))
+
+                    let extraLength = Math.floor(Math.random() * 7) + 6
+                    for (let i = 0; i < extraLength; i++) {
+                        res += all.charAt(Math.floor(Math.random() * all.length))
+                    }
+
+                    let shuffled = res.split('').sort(function(){return 0.5-Math.random()}).join('')
+
+                    inputPassword.text = shuffled
+                    lastError = ""
+                }
+                background: Rectangle {
+                    radius: 8
+                    color: parent.hovered ? "#f0f4f8" : "#ffffff"
+                    border.color: parent.hovered ? "#4A90E2" : "#dddddd"
+                    border.width: 1
+                }
+            }
         }
 
         // --- DATE INPUT AREA ---
@@ -101,6 +187,13 @@ Window {
                 Layout.fillWidth: true
                 placeholderText: "Bitiş Tarihi (Örn: 25.08.2027)"
                 font.pixelSize: 14
+                leftPadding: 12
+                background: Rectangle {
+                    radius: 8
+                    color: "#ffffff"
+                    border.color: parent.activeFocus ? "#4A90E2" : "#dddddd"
+                    border.width: parent.activeFocus ? 2 : 1
+                }
             }
 
             Button {
@@ -108,7 +201,14 @@ Window {
                 implicitWidth: 40
                 implicitHeight: 40
                 font.pixelSize: 18
+                padding: 0
                 onClicked: calendarPopup.open()
+                background: Rectangle {
+                    radius: 8
+                    color: parent.hovered ? "#f0f4f8" : "#ffffff"
+                    border.color: parent.hovered ? "#4A90E2" : "#dddddd"
+                    border.width: 1
+                }
             }
         }
 
@@ -306,6 +406,53 @@ Window {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
+
+                    // 1. Reset previous errors and state
+                    lastError = ""
+                    generated = false
+
+                    let userId = inputId.text
+                    let password = inputPassword.text
+
+                    // --- USER ID VALIDATIONS ---
+                    // Rule 1: Minimum 6 characters
+                    if (userId.length < 6) {
+                        lastError = "Kullanıcı adı en az 6 karakter olmalıdır!"
+                        return
+                    }
+
+                    // Rule 2: No special characters or spaces (Alphanumeric only)
+                    let idRegex = /^[a-zA-Z0-9]+$/
+                    if (!idRegex.test(userId)) {
+                        lastError = "Kullanıcı adı özel karakter veya boşluk içeremez!"
+                        return
+                    }
+
+                    // --- PASSWORD VALIDATIONS ---
+                    // Rule 3: Minimum 8 characters
+                    if (password.length < 8) {
+                        lastError = "Şifre en az 8 karakter olmalıdır!"
+                        return
+                    }
+
+                    // Rule 4: Must contain uppercase, lowercase, and special character
+                    let hasUpperCase = /[A-Z]/.test(password)
+                    let hasLowerCase = /[a-z]/.test(password)
+                    let hasNumber = /[0-9]/.test(password)
+                    let hasSpecialChar = /[^a-zA-Z0-9]/.test(password) // Anything that is NOT a letter or number
+
+                    let missingReqs = []
+                        if (!hasUpperCase) missingReqs.push("1 büyük harf")
+                        if (!hasLowerCase) missingReqs.push("1 küçük harf")
+                        if (!hasNumber) missingReqs.push("1 sayı")
+                        if (!hasSpecialChar) missingReqs.push("1 özel karakter")
+
+                    if (missingReqs.length > 0) {
+
+                        lastError = "Şifre en az " + missingReqs.join(", ") + " içermelidir!"
+                        return
+                    }
+
                     var result = licenseManager.generateCustomLicense(inputId.text, inputPassword.text, inputDate.text)
                     lastId         = result.id         || ""
                     lastPassword   = result.password   || ""
