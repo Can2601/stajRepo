@@ -22,6 +22,7 @@ endif()
 qt_add_executable(apptestQtProject
     main.cpp
     licenseauth.h       # Q_OBJECT – MOC must process this
+    recentlogins.h      # Q_OBJECT – MOC must process this
     crypto_utils.h
     shared_license_key.h
 )
