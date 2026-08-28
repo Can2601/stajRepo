@@ -4,6 +4,8 @@
 
 #include "licenseauth.h"
 #include "recentlogins.h"
+#include "AppConfig.h"
+#include "AppSettings.h"
 
 int main(int argc, char *argv[])
 {
@@ -14,15 +16,14 @@ int main(int argc, char *argv[])
     // Expose LicenseAuth to QML as a context property.
     // QML calls: LicenseAuth.validateCredentials(id, pwd)
     //            LicenseAuth.lastError()
-    LicenseAuth licenseAuth;
-
-    // Expose RecentLogins to QML as a context property.
-    // QML calls: RecentLogins.all() / RecentLogins.add(id) / RecentLogins.remove(id)
+    LicenseAuth  licenseAuth;
     RecentLogins recentLogins;
+    AppSettings  appSettings;
 
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("LicenseAuth",   &licenseAuth);
-    engine.rootContext()->setContextProperty("RecentLogins",  &recentLogins);
+    engine.rootContext()->setContextProperty("LicenseAuth",  &licenseAuth);
+    engine.rootContext()->setContextProperty("RecentLogins", &recentLogins);
+    engine.rootContext()->setContextProperty("AppSettings",  &appSettings);
 
     QObject::connect(
         &engine,

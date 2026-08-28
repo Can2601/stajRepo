@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SODIUM_ROOT "C:/Users/cmkak/Documents/libs/libsodium-win64"
     CACHE PATH "Path to the libsodium installation")
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickDialogs2)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
@@ -23,6 +23,8 @@ qt_add_executable(apptestQtProject
     main.cpp
     licenseauth.h       # Q_OBJECT – MOC must process this
     recentlogins.h      # Q_OBJECT – MOC must process this
+    AppConfig.h
+    AppSettings.h       # Q_OBJECT – MOC must process this
     crypto_utils.h
     shared_license_key.h
 )
@@ -46,6 +48,7 @@ set_target_properties(apptestQtProject PROPERTIES
 target_include_directories(apptestQtProject PRIVATE ${SODIUM_ROOT}/include)
 target_link_libraries(apptestQtProject
     PRIVATE Qt6::Quick
+    PRIVATE Qt6::QuickDialogs2
     PRIVATE ${SODIUM_ROOT}/lib/libsodium.a
 )
 

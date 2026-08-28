@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
+import QtQuick.Dialogs
 
 Item {
     id: loginPage
@@ -186,9 +187,70 @@ Item {
                         onClicked: attemptLogin()
                     }
                 }
+
+                // ── License directory ──────────────────────────────────────────
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: 8
+                    implicitHeight: 36
+                    radius: 6
+                    color: "#F8F8F8"
+                    border.color: AppSettings.licenseDir === "" ? "#FFAAAA" : "#E0E0E0"
+                    border.width: 1
+
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                    RowLayout {
+                        anchors { fill: parent; leftMargin: 8; rightMargin: 6 }
+                        spacing: 6
+
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: AppSettings.licenseDir === ""
+                                  ? qsTr("No license directory set")
+                                  : AppSettings.licenseDir
+                            color: AppSettings.licenseDir === "" ? "#CC4444" : "#555555"
+                            font.pixelSize: 11
+                            elide: Text.ElideMiddle
+                        }
+
+                        Rectangle {
+                            width: 52
+                            height: 24
+                            radius: 4
+                            color: browseMouse.containsPress ? "#3A7BD5"
+                                 : browseMouse.containsMouse ? "#4A8EE8" : "#4A90E2"
+
+                            Behavior on color { ColorAnimation { duration: 80 } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: qsTr("Browse")
+                                color: "#FFFFFF"
+                                font.pixelSize: 10
+                                font.weight: Font.Medium
+                            }
+
+                            MouseArea {
+                                id: browseMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: folderDialog.open()
+                            }
+                        }
+                    }
+                }
             }
         }
 
+        // ── Native folder picker dialog ────────────────────────────────────────
+        FolderDialog {
+            id: folderDialog
+            title: qsTr("Select License Directory")
+            onAccepted: AppSettings.setLicenseDirFromUrl(selectedFolder)
+        }
         // ── Saved logins panel ────────────────────────────────────────────────
         Rectangle {
             id: savedPanel
