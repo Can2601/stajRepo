@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Dialogs
 
 Window {
     width: 500
@@ -16,6 +17,15 @@ Window {
     property string lastFilePath: ""
     property string lastError: ""
     property bool generated: false
+    property string customFolderPath: ""
+
+    FolderDialog {
+        id: folderDialog
+        title: "Lisansın Kaydedileceği Klasörü Seçin"
+        onAccepted: {
+             customFolderPath = selectedFolder.toString()
+        }
+    }
 
     // Reusable copy button component
     component CopyButton: Rectangle {
@@ -382,30 +392,52 @@ Window {
         }
 
 
-        // Generate button
-        Rectangle {
+        // / Generate button and Folder picker area
+
+        RowLayout {
             Layout.fillWidth: true
-            implicitHeight: 40
-            radius: 6
-            color: btnMouse.containsPress ? "#3A7BD5"
-                 : btnMouse.containsMouse ? "#4A8EE8" : "#4A90E2"
+            spacing: 8
 
-            Behavior on color { ColorAnimation { duration: 100 } }
+            Button {
+                text: "📁"
+                implicitWidth: 40
+                implicitHeight: 40
+                font.pixelSize: 18
+                padding: 0
 
-            Text {
-                anchors.centerIn: parent
-                text: "Lisans Üret"
-                color: "#ffffff"
-                font.pixelSize: 14
-                font.bold: true
+                background: Rectangle {
+                    radius: 8
+                    color: customFolderPath !== "" ? "#e6f0fa" : (parent.hovered ? "#f0f4f8" : "#ffffff")
+                    border.color: customFolderPath !== "" ? "#3A7BD5" : (parent.hovered ? "#4A90E2" : "#dddddd")
+                    border.width: customFolderPath !== "" ? 2 : 1
+                }
+
+                onClicked: folderDialog.open()
             }
 
-            MouseArea {
-                id: btnMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 40
+                radius: 6
+                color: btnMouse.containsPress ? "#3A7BD5"
+                    : btnMouse.containsMouse ? "#4A8EE8" : "#4A90E2"
+
+                Behavior on color { ColorAnimation { duration: 100 } }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Lisans Üret"
+                    color: "#ffffff"
+                    font.pixelSize: 14
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: btnMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
 
                     // 1. Reset previous errors and state
                     lastError = ""
@@ -453,13 +485,14 @@ Window {
                         return
                     }
 
-                    var result = licenseManager.generateCustomLicense(inputId.text, inputPassword.text, inputDate.text)
+                    var result = licenseManager.generateCustomLicense(inputId.text, inputPassword.text, inputDate.text, customFolderPath)
                     lastId         = result.id         || ""
                     lastPassword   = result.password   || ""
                     lastExpiryDate = result.expiryDate || ""
                     lastFilePath   = result.filePath   || ""
                     lastError      = result.error      || ""
                     generated      = result.success === true
+                    }
                 }
             }
         }

@@ -14,17 +14,16 @@
 #include <sodium.h>
 #include "shared_license_key.h"
 
-// ── License file format ───────────────────────────────────────────────────────
-// Each file written to SHARED_LICENSE_FOLDER/<id>.json contains:
+// ── License file format (Raw Binary) ───────────────────────────────────────────────────────
+// Each file written to SHARED_LICENSE_FOLDER/<id>.lic contains raw bytes:
 //
-//   {
-//     "bundle": "<base64( nonce[24] | ciphertext | poly1305_tag[16] )>"
-//   }
+//   [ Nonce (24 bytes) ] + [ Ciphertext ] + [ Poly1305 Tag (16 bytes) ]
 //
 // The inner plaintext (before encryption) is compact JSON:
 //   {"id":"...","password":"...","createdAt":"...","expiryDate":"..."}
 //
 // Algorithm : XChaCha20-Poly1305 (IETF) via libsodium
+// Format    : Raw Binary (No Base64, No JSON wrapping)
 // Nonce     : 24 bytes, randomly generated per license, NOT secret
 // Key       : 32 bytes, shared secret — see shared_license_key.h
 // Tag       : 16 bytes Poly1305 MAC appended by libsodium, detects tampering
@@ -48,7 +47,7 @@ public:
     }
 
     // Function that generates a license using custom user inputs from the UI
-    Q_INVOKABLE QVariantMap generateCustomLicense(QString id, QString password, QString expiryDateStr)
+    Q_INVOKABLE QVariantMap generateCustomLicense(QString id, QString password, QString expiryDateStr, QString customFolder = "")
     {
         QVariantMap result;
         QDateTime created = QDateTime::currentDateTime();
@@ -97,10 +96,20 @@ public:
         QByteArray nonceBuf(reinterpret_cast<const char*>(nonce), sizeof(nonce));
         QByteArray bundle  = nonceBuf + cipherBuf;
 
+        // 4. Determine target directory
+        QString targetFolderPath = customFolder.trimmed().isEmpty() ? SHARED_LICENSE_FOLDER : customFolder;
 
-        // 4. Write raw binary data directly to the file
+        if (targetFolderPath.startsWith("file:///")) {
+#ifdef Q_OS_WIN
+            targetFolderPath = targetFolderPath.mid(8); // Windows needs C:/...
+#else
+            targetFolderPath = targetFolderPath.mid(7); // Unix needs /...
+#endif
+        } else if (targetFolderPath.startsWith("file://")) {
+            targetFolderPath = targetFolderPath.mid(7);
+        }
 
-        QDir dir(SHARED_LICENSE_FOLDER);
+        QDir dir(targetFolderPath);
         if (!dir.exists()) dir.mkpath(".");
 
         // Changed file extension to .lic to represent a raw license file
