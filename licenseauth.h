@@ -8,9 +8,11 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDateTime>
+#include <QByteArray>
 
-#include "crypto_utils.h"      // encrypt / decrypt / toBase64 — defined here
+#include "crypto_utils.h"      // encrypt / decrypt — defined here
 #include "shared_license_key.h" // LICENSE_KEY[32]
+#include "AppConfig.h"          // AppConfig::instance().licenseDir
 
 // ── LicenseAuth ───────────────────────────────────────────────────────────────
 // Exposed to QML as "LicenseAuth" context property.
@@ -44,51 +46,37 @@ public:
     Q_INVOKABLE bool validateCredentials(const QString &id, const QString &password)
     {
         m_lastError.clear();
+        
+        QString lDir = AppConfig::instance().licenseDir;
 
-        // 1. Locate the license file
-        QString filePath = QDir::homePath()
-                           + "/LicenseShared/licenses/"
-                           + id + ".json";
+        // 1. Locate the .lic file (raw binary format)
+        QString filePath =lDir + "/"+ id + ".lic";
 
         if (!QFile::exists(filePath)) {
             m_lastError = "License not found for this User ID.";
             return false;
         }
 
-        // 2. Read envelope JSON
+        // 2. Read raw binary bundle: nonce[24] | ciphertext | tag[16]
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly)) {
             m_lastError = "Could not open license file.";
             return false;
         }
-        QByteArray raw = file.readAll();
+        QByteArray bundle = file.readAll();
         file.close();
 
-        QJsonParseError parseErr;
-        QJsonDocument   doc = QJsonDocument::fromJson(raw, &parseErr);
-        if (parseErr.error != QJsonParseError::NoError || !doc.isObject()) {
-            m_lastError = "License file is corrupted (invalid JSON).";
-            return false;
-        }
-
-        QJsonObject envelope = doc.object();
-        if (!envelope.contains("bundle") || !envelope["bundle"].isString()) {
-            m_lastError = "License file is corrupted (missing bundle field).";
-            return false;
-        }
-
-        // 3. Decrypt using the same decrypt() from crypto_utils.h
-        std::string bundle    = envelope["bundle"].toString().toStdString();
+        // 3. Decrypt
         std::string plaintext;
-
         try {
-            plaintext = decrypt(bundle, LICENSE_KEY); // ← same function as encrypt_demo
+            plaintext = decrypt(bundle, LICENSE_KEY);
         } catch (const std::exception &e) {
             m_lastError = QString("Decryption failed: %1").arg(e.what());
             return false;
         }
 
         // 4. Parse the decrypted license JSON
+        QJsonParseError parseErr;
         QJsonDocument licenseDoc = QJsonDocument::fromJson(
             QByteArray::fromStdString(plaintext), &parseErr);
 

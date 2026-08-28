@@ -19,6 +19,7 @@
 #include <vector>
 #include <stdexcept>
 #include <cstring>
+#include <QByteArray>
 
 // Short aliases for the IETF XChaCha20-Poly1305 constants
 static constexpr size_t KEY_BYTES   = crypto_aead_xchacha20poly1305_ietf_KEYBYTES;   // 32
@@ -79,44 +80,40 @@ static std::string encrypt(const std::string& plaintext,
     return toBase64(bundle.data(), bundle.size());
 }
 
+
 // ----------------------------------------------------------
-// DECRYPT  (XChaCha20-Poly1305)
-// Throws std::runtime_error if tampered or wrong key.
+// DECRYPT from raw binary bundle  (new .lic file format)
+//
+// Bundle layout — raw bytes, no base64:
+//   [ nonce (24 B) | ciphertext (N B) | MAC tag (16 B) ]
+//
+// This is the binary that licensemanager writes directly
+// to disk with QIODevice::WriteOnly.
 // ----------------------------------------------------------
-static std::string decrypt(const std::string& base64Bundle,
-                     const unsigned char key[KEY_BYTES],
-                     const std::string& additionalData = "")
+static std::string decrypt(const QByteArray& bundle,
+                                  const unsigned char key[KEY_BYTES],
+                                  const std::string& additionalData = "")
 {
-    // 1. Base64 → raw bytes
-    size_t maxLen = base64Bundle.size();
-    std::vector<unsigned char> bundle(maxLen);
-    size_t binLen = 0;
-
-    if (sodium_base642bin(
-            bundle.data(), maxLen,
-            base64Bundle.c_str(), base64Bundle.size(),
-            nullptr, &binLen, nullptr,
-            sodium_base64_VARIANT_ORIGINAL) != 0)
-        throw std::runtime_error("Base64 decode failed");
-
-    if (binLen <= NONCE_BYTES + MAC_BYTES)
+    if (static_cast<size_t>(bundle.size()) <= NONCE_BYTES + MAC_BYTES)
         throw std::runtime_error("Bundle too short");
 
-    // 2. Split nonce | cipher+tag
-    unsigned char nonce[NONCE_BYTES];
-    std::memcpy(nonce, bundle.data(), NONCE_BYTES);
+    const auto* data = reinterpret_cast<const unsigned char*>(bundle.constData());
 
-    const unsigned char* cipher    = bundle.data() + NONCE_BYTES;
-    size_t               cipherLen = binLen - NONCE_BYTES;
+    // 1. Split nonce | cipher+tag
+    unsigned char nonce[NONCE_BYTES];
+    std::memcpy(nonce, data, NONCE_BYTES);
+
+    const unsigned char* cipher    = data + NONCE_BYTES;
+    size_t               cipherLen = static_cast<size_t>(bundle.size()) - NONCE_BYTES;
     size_t               plainLen  = cipherLen - MAC_BYTES;
 
-    // 3. Decrypt + verify Poly1305 MAC
+    // 2. Decrypt + verify Poly1305 MAC
     std::vector<unsigned char> plain(plainLen);
     unsigned long long outLen = 0;
 
     if (crypto_aead_xchacha20poly1305_ietf_decrypt(
             plain.data(), &outLen,
-            nullptr,  // nsec – not used
+            nullptr,
             cipher, cipherLen,
             reinterpret_cast<const unsigned char*>(additionalData.data()), additionalData.size(),
             nonce, key) != 0)
