@@ -15,7 +15,7 @@ RESOURCES += qml.qrc
 
 # ── libsodium ─────────────────────────────────────────────────────────────────
 # Link statically (libsodium.a) so no libsodium-26.dll is needed at runtime.
-SODIUM_ROOT = C:/Users/cmkak/Documents/libs/libsodium-win64
+SODIUM_ROOT = C:\Libsodium\libsodium-win64
 
 INCLUDEPATH += $$SODIUM_ROOT/include
 LIBS        += $$SODIUM_ROOT/lib/libsodium.a

@@ -12,11 +12,3 @@ QString User::getID() const{
 QString User::getPassword() const{
     return password;
 }
-
-void User::setID(const QString& id){
-    this->id = id;
-}
-
-void User::setPassword(const QString& password){
-    this->password = password;
-}

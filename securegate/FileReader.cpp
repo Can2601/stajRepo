@@ -1,31 +1,55 @@
 #include "FileReader.h"
-#include <QFile> //to open/close a file
-#include <QTextStream> //to read a text line by line
+#include <QFile> // to open/close a file
 #include <QDebug>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
 
+FileReader::FileReader() {}
 
-FileReader::FileReader() {
+QByteArray FileReader::readEncryptedFile(const QString &filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "License file could NOT be opened:" << filePath;
+        return QByteArray();
+    }
+
+    QByteArray data = file.readAll();
+    file.close();
+    return data;
 }
 
-QList<User> FileReader::readUsers(){
+QList<User> FileReader::parseUsersFromJson(const QByteArray &jsonData) {
     QList<User> users;
-    QFile file("securegate/users.txt");
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)){
-        qDebug() << "FILE COULD NOT BE OPENED";
+
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(jsonData, &parseError);
+
+    if (parseError.error != QJsonParseError::NoError) {
+        qDebug() << "JSON parse error:" << parseError.errorString();
         return users;
     }
 
-    QTextStream in(&file);
-    while (!in.atEnd()){
-        QString idLine = in.readLine(); //first line is for id
-        QString passwordLine = in.readLine(); //second line is for password
+    if (doc.isObject()) {
+        QJsonObject obj = doc.object();
 
-        QString id = idLine.mid(3); //discarding "id="
-        QString password = passwordLine.mid(9); //discarding "password="
+        QString id = obj["id"].toString();
+        QString password = obj["password"].toString();
+        QString expiryStr = obj["expiryDate"].toString();
 
-        users.append(User(id, password));
+        //checking license expiration date
+        QDateTime expiryDate = QDateTime::fromString(expiryStr, Qt::ISODate);
+        QDateTime currentDateTime = QDateTime::currentDateTime();
+
+        if (expiryDate.isValid() && currentDateTime > expiryDate) {
+            qDebug() << "License expired on:" << expiryDate.toString(Qt::ISODate);
+            return users; //returns empty list
+        }
+
+        if (!id.isEmpty()) {
+            users.append(User(id, password));
+        }
     }
 
-    file.close();
     return users;
 }

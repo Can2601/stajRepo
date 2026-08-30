@@ -1,11 +1,11 @@
 #ifndef LOGINMANAGER_H
 #define LOGINMANAGER_H
+
 #include <QString>
 #include <QList>
-#include <User.h>
 #include <QObject>
-
-//using QObject in order to use in QML
+#include <QUrl>
+#include "User.h"
 
 class LoginManager : public QObject
 {
@@ -14,10 +14,14 @@ class LoginManager : public QObject
 public:
     LoginManager();
 
+    Q_INVOKABLE bool loadLicense(const QUrl &fileUrl);
     Q_INVOKABLE bool login(const QString& id, const QString& password);
+
+    Q_INVOKABLE QString getExpiryDate() const { return expiryDate; }
 
 private:
     QList<User> users;
+    QString expiryDate; //to keep the expiry date
 };
 
 #endif // LOGINMANAGER_H

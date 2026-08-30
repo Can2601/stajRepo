@@ -13,10 +13,6 @@ public:
     QString getID() const;
     QString getPassword() const;
 
-    //setters
-    void setID(const QString& id);
-    void setPassword(const QString& password);
-
 private:
     QString id;
     QString password;

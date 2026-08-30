@@ -3,13 +3,8 @@ import QtQuick.Layouts
 import QtQuick.Controls.Basic
 
 
-ApplicationWindow {
-    width: 380
-    height: 370
-    minimumWidth: 200
-    minimumHeight: 250
-    visible: true
-    title: qsTr("Secure Gate")
+Page {
+    id: dashboardPage
 
     Rectangle {
         anchors.centerIn: parent

@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 
-set(SODIUM_ROOT "C:/libsodium/libsodium-win64")
+set(SODIUM_ROOT "C:/Libsodium/libsodium-win64")
 
 set(SODIUM_INCLUDE_DIR "${SODIUM_ROOT}/include")
 set(SODIUM_LIBRARY "${SODIUM_ROOT}/lib/libsodium.dll.a")
@@ -20,22 +20,21 @@ endif()
 
 qt_add_executable(appsecuregate
     main.cpp
+    FileReader.h FileReader.cpp
+    User.h User.cpp
+    loginmanager.h loginmanager.cpp
 )
 
 qt_add_qml_module(appsecuregate
     URI securegate
+    VERSION 1.0
     QML_FILES
         Main.qml
-        SOURCES
-        RESOURCES
-        SOURCES FileReader.h FileReader.cpp
-        SOURCES User.h User.cpp
-        RESOURCES
-        RESOURCES
-        RESOURCES users.txt
-        SOURCES loginmanager.h loginmanager.cpp
-        QML_FILES SuccessPage.qml
-        QML_FILES
+        DashboardPage.qml
+    RESOURCES
+
+    SOURCES
+        QML_FILES LoginPage.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

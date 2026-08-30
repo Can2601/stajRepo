@@ -1,8 +1,0 @@
-id=yevgeniy
-password=yvbazarov
-id=daria
-password=d4r14
-id=jane
-password=qwerty111
-id=aaa
-password=123
