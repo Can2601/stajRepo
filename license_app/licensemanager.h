@@ -10,7 +10,7 @@
 #include <QFile>
 #include <QDir>
 #include <QStandardPaths>
-
+#include <QDebug>
 #include <sodium.h>
 #include "shared_license_key.h"
 
@@ -44,6 +44,7 @@ public:
         if (sodium_init() < 0) {
             qWarning("LicenseManager: libsodium initialization failed!");
         }
+
     }
 
     // Function that generates a license using custom user inputs from the UI
@@ -61,15 +62,57 @@ public:
             return result;
         }
 
-        // 1. Build compact JSON plaintext
+        // 1. Hash the Password (BLAKE2b - crypto_generichash)
+        QByteArray passBytes = password.toUtf8();
+        unsigned char hashOut[crypto_generichash_BYTES];
+
+        // Convert the plaintext password into an irreversible hash
+        crypto_generichash(hashOut, sizeof(hashOut),
+                           reinterpret_cast<const unsigned char*>(passBytes.constData()),
+                           passBytes.size(),
+                           nullptr, 0);
+
+        // Convert the binary hash to a Hex string to store it safely in JSON
+        QString hashedPassword = QString(QByteArray(reinterpret_cast<const char*>(hashOut), sizeof(hashOut)).toHex());
+
+        // 2. Build compact JSON plaintext
         QJsonObject licenseJson;
         licenseJson["id"]          = id;
-        licenseJson["password"]    = password;
+        licenseJson["password"]    = hashedPassword; // Store the hash, NOT the plaintext password!
         licenseJson["createdAt"]   = created.toString(Qt::ISODate);
         licenseJson["expiryDate"]  = expiry.toString(Qt::ISODate);
-        QByteArray plaintext = QJsonDocument(licenseJson).toJson(QJsonDocument::Compact);
+        QByteArray rawJsonData = QJsonDocument(licenseJson).toJson(QJsonDocument::Compact);
 
-        // 2. Encrypt with XChaCha20-Poly1305 (Libsodium)
+        // 3. JSON Integrity Hash (Task: Hash the entire JSON content)
+        unsigned char jsonHash[crypto_generichash_BYTES];
+        crypto_generichash(jsonHash, sizeof(jsonHash),
+                           reinterpret_cast<const unsigned char*>(rawJsonData.constData()),
+                           rawJsonData.size(), nullptr, 0);
+
+        // 4. Sign the Hash with Private Key (Task: Sign the hash with private key)
+        // WARNING: This is your application's SECRET key. It must never be exposed.
+        QByteArray privateKeyHex = "3a99eb1278d72dbb1816cd68dd6faddc44f4afa138ff9569040d902fc8e492499e0aaea88c184528272a008b5c8dfc601acdf428e6e7f96878ab027e18b734ee";
+        QByteArray privateKey = QByteArray::fromHex(privateKeyHex);
+
+        unsigned char signature[crypto_sign_BYTES];
+        unsigned long long sigLen;
+
+        // Sign only the hash of the JSON
+        crypto_sign_detached(signature, &sigLen,
+                             jsonHash, sizeof(jsonHash),
+                             reinterpret_cast<const unsigned char*>(privateKey.constData()));
+
+        QString signatureHex = QString(QByteArray(reinterpret_cast<char*>(signature), sigLen).toHex());
+
+        // 5. Combine original data and signature into a final JSON package
+        QJsonObject finalSignedJson;
+        finalSignedJson["licenseData"] = licenseJson; // Login app reads this part
+        finalSignedJson["signature"]   = signatureHex;  // Login app verifies this signature using the public key
+
+        // The final plaintext to be encrypted (XChaCha20)
+        QByteArray plaintext = QJsonDocument(finalSignedJson).toJson(QJsonDocument::Compact);
+
+        // 6. Encrypt with XChaCha20-Poly1305 (Libsodium)
         unsigned char nonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
         randombytes_buf(nonce, sizeof(nonce));
 
@@ -92,11 +135,11 @@ public:
         }
         cipherBuf.resize(static_cast<int>(actualLen));
 
-        // 3. Bundle (nonce + ciphertext)
+        // 7. Bundle (nonce + ciphertext)
         QByteArray nonceBuf(reinterpret_cast<const char*>(nonce), sizeof(nonce));
         QByteArray bundle  = nonceBuf + cipherBuf;
 
-        // 4. Determine target directory
+        // 8. Determine target directory
         QString targetFolderPath = customFolder.trimmed().isEmpty() ? SHARED_LICENSE_FOLDER : customFolder;
 
         if (targetFolderPath.startsWith("file:///")) {
@@ -124,7 +167,7 @@ public:
             success = true;
         }
 
-        // 5. Return results to QML
+        // 9. Return results to QML
         result["success"]    = success;
         result["id"]         = id;
         result["password"]   = password;
