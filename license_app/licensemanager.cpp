@@ -115,23 +115,28 @@ QVariantMap LicenseManager::generateCustomLicense(QString id, QString password, 
     QByteArray bundle  = nonceBuf + cipherBuf;
 
     // 8. Determine target directory
-    QString targetFolderPath = customFolder.trimmed().isEmpty() ? SHARED_LICENSE_FOLDER : customFolder;
+    QString filePath = customFolder.trimmed();
 
-    if (targetFolderPath.startsWith("file:///")) {
+    if (filePath.isEmpty()) {
+        QDir dir(SHARED_LICENSE_FOLDER);
+        if (!dir.exists()) dir.mkpath(".");
+        filePath = dir.filePath(id + ".lic");
+    } else {
+
+        if (filePath.startsWith("file:///")) {
 #ifdef Q_OS_WIN
-        targetFolderPath = targetFolderPath.mid(8); // Windows needs C:/...
+            filePath = filePath.mid(8); // Windows needs C:/...
 #else
-        targetFolderPath = targetFolderPath.mid(7); // Unix needs /...
+            filePath = filePath.mid(7); // Unix needs /...
 #endif
-    } else if (targetFolderPath.startsWith("file://")) {
-        targetFolderPath = targetFolderPath.mid(7);
+        } else if (filePath.startsWith("file://")) {
+            filePath = filePath.mid(7);
+        }
+
+        QFileInfo fileInfo(filePath);
+        QDir().mkpath(fileInfo.absolutePath());
     }
 
-    QDir dir(targetFolderPath);
-    if (!dir.exists()) dir.mkpath(".");
-
-    // Changed file extension to .lic to represent a raw license file
-    QString filePath = dir.filePath(id + ".lic");
     QFile file(filePath);
     bool success = false;
 
