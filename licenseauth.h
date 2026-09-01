@@ -87,8 +87,19 @@ public:
 
         QJsonObject license = licenseDoc.object();
 
-        // 5. Check password
-        if (license["password"].toString() != password) {
+        // 5. Verify password with Argon2id (crypto_pwhash_str_verify)
+        QString   storedHash      = license["password"].toString();
+        QByteArray storedHashBytes = storedHash.toUtf8();
+        QByteArray passwordBytes   = password.toUtf8();
+
+        // Copy into a fixed-size buffer (crypto_pwhash_STRBYTES = 128)
+        char hashBuf[crypto_pwhash_STRBYTES] = {};
+        qstrncpy(hashBuf, storedHashBytes.constData(), crypto_pwhash_STRBYTES);
+
+        if (crypto_pwhash_str_verify(
+                hashBuf,
+                passwordBytes.constData(),
+                static_cast<unsigned long long>(passwordBytes.size())) != 0) {
             m_lastError = "Incorrect password.";
             return false;
         }
