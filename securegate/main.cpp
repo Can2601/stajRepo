@@ -12,7 +12,7 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
-
+/*
     //libsodium control
     if (sodium_init() < 0)
     {
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 
     std::string decrypted_message(reinterpret_cast<char*>(decrypted), decrypted_len);
     std::cout << "decrypted message: " << decrypted_message << std::endl;
-
+*/
 
     //login manager definition
     LoginManager loginManager;

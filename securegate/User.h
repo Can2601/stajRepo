@@ -7,15 +7,15 @@ class User
 
 public:
     //constructor
-    User(const QString& id, const QString& password);
+    User(const QString& id, const QString& passwordHash);
 
     //getters
     QString getID() const;
-    QString getPassword() const;
+    QString getPasswordHash() const;
 
 private:
     QString id;
-    QString password;
+    QString passwordHash;
 };
 
 #endif // USER_H

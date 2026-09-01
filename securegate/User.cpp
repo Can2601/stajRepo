@@ -1,14 +1,14 @@
 #include "User.h"
 
-User::User(const QString& id, const QString& password) {
+User::User(const QString& id, const QString& passwordHash) {
     this->id = id;
-    this->password = password;
+    this->passwordHash = passwordHash;
 }
 
 QString User::getID() const{
     return id;
 }
 
-QString User::getPassword() const{
-    return password;
+QString User::getPasswordHash() const{
+    return passwordHash;
 }
