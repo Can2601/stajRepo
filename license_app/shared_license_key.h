@@ -2,6 +2,7 @@
 #define SHARED_LICENSE_KEY_H
 
 #include <sodium.h>
+#include <QByteArray>
 
 // ── SHARED ChaCha20-Poly1305 SECRET KEY ──────────────────────────────────────
 // This 32-byte key MUST be byte-for-byte identical in both:
@@ -20,5 +21,10 @@ static const unsigned char LICENSE_KEY[crypto_aead_xchacha20poly1305_ietf_KEYBYT
     0x00, 0x11, 0x22, 0x33,  0x44, 0x55, 0x66, 0x77,
     0x88, 0x99, 0xaa, 0xbb,  0xcc, 0xdd, 0xee, 0xff
 };
+
+// ── PUBLIC KEY (Ed25519) for Signature Verification ──────────────────────────
+// This key is used by the LOGIN APP to verify the authenticity of the license.
+// ─────────────────────────────────────────────────────────────────────────────
+static const QByteArray PUBLIC_LICENSE_KEY = QByteArray::fromHex("9ce421d7156e348a0864ad240913e65e6b06b51deac9820feaf241f690fc98f0");
 
 #endif // SHARED_LICENSE_KEY_H

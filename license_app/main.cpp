@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
     // "licenseManager" adıyla QML tarafına tanıtıyoruz.
-    // QML içinde artık licenseManager.generateAndSave(...) diye çağırabiliriz.
+    // QML içinde artık licenseManager.generateCustomLicense(...) diye çağırabiliriz.
     engine.rootContext()->setContextProperty("licenseManager", &licenseManager);
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));

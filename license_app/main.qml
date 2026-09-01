@@ -17,15 +17,24 @@ Window {
     property string lastFilePath: ""
     property string lastError: ""
     property bool generated: false
-    property string customFolderPath: ""
 
-    FolderDialog {
-        id: folderDialog
-        title: "Lisansın Kaydedileceği Klasörü Seçin"
-        onAccepted: {
-             customFolderPath = selectedFolder.toString()
+
+    FileDialog {
+            id: saveDialog
+            title: "Lisansı Kaydet"
+            fileMode: FileDialog.SaveFile
+            defaultSuffix: "lic"
+            nameFilters: ["Lisans Dosyaları (*.lic)"]
+            onAccepted: {
+                var result = licenseManager.generateCustomLicense(inputId.text, inputPassword.text, inputDate.text, saveDialog.selectedFile.toString())
+                lastId         = result.id         || ""
+                lastPassword   = result.password   || ""
+                lastExpiryDate = result.expiryDate || ""
+                lastFilePath   = result.filePath   || ""
+                lastError      = result.error      || ""
+                generated      = result.success === true
+            }
         }
-    }
 
     // Reusable copy button component
     component CopyButton: Rectangle {
@@ -106,29 +115,6 @@ Window {
                 }
             }
 
-            Button {
-                text: "🎲"
-                implicitWidth: 40
-                implicitHeight: 40
-                font.pixelSize: 18
-                padding: 0
-                onClicked: {
-                    let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-                    let res = ""
-                    let randomLength = Math.floor(Math.random() * 5) + 6
-                    for (let i = 0; i < randomLength; i++) {
-                        res += chars.charAt(Math.floor(Math.random() * chars.length))
-                    }
-                    inputId.text = res
-                    lastError = ""
-                }
-                background: Rectangle {
-                    radius: 8
-                    color: parent.hovered ? "#f0f4f8" : "#ffffff"
-                    border.color: parent.hovered ? "#4A90E2" : "#dddddd"
-                    border.width: 1
-                }
-            }
         }
 
         // --- PASSWORD INPUT AREA ---
@@ -168,8 +154,7 @@ Window {
                     res += special.charAt(Math.floor(Math.random() * special.length))
                     res += num.charAt(Math.floor(Math.random() * num.length))
 
-                    let extraLength = Math.floor(Math.random() * 7) + 6
-                    for (let i = 0; i < extraLength; i++) {
+                    for (let i = 0; i < 8; i++) {
                         res += all.charAt(Math.floor(Math.random() * all.length))
                     }
 
@@ -398,23 +383,6 @@ Window {
             Layout.fillWidth: true
             spacing: 8
 
-            Button {
-                text: "📁"
-                implicitWidth: 40
-                implicitHeight: 40
-                font.pixelSize: 18
-                padding: 0
-
-                background: Rectangle {
-                    radius: 8
-                    color: customFolderPath !== "" ? "#e6f0fa" : (parent.hovered ? "#f0f4f8" : "#ffffff")
-                    border.color: customFolderPath !== "" ? "#3A7BD5" : (parent.hovered ? "#4A90E2" : "#dddddd")
-                    border.width: customFolderPath !== "" ? 2 : 1
-                }
-
-                onClicked: folderDialog.open()
-            }
-
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 40
@@ -485,13 +453,9 @@ Window {
                         return
                     }
 
-                    var result = licenseManager.generateCustomLicense(inputId.text, inputPassword.text, inputDate.text, customFolderPath)
-                    lastId         = result.id         || ""
-                    lastPassword   = result.password   || ""
-                    lastExpiryDate = result.expiryDate || ""
-                    lastFilePath   = result.filePath   || ""
-                    lastError      = result.error      || ""
-                    generated      = result.success === true
+                    saveDialog.currentFile = userId + ".lic"
+                    saveDialog.open()
+
                     }
                 }
             }
