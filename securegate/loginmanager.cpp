@@ -14,6 +14,14 @@ static const unsigned char LICENSE_KEY[crypto_aead_xchacha20poly1305_ietf_KEYBYT
     0x88, 0x99, 0xaa, 0xbb,  0xcc, 0xdd, 0xee, 0xff
 };
 
+
+// ── PUBLIC KEY (Ed25519) for Signature Verification ──────────────────────────
+// This key is used by the LOGIN APP to verify the authenticity of the license.
+// ─────────────────────────────────────────────────────────────────────────────
+static const QByteArray PUBLIC_LICENSE_KEY = QByteArray::fromHex("9ce421d7156e348a0864ad240913e65e6b06b51deac9820feaf241f690fc98f0");
+
+
+
 //libsodium control
 LoginManager::LoginManager() : QObject() {
     if (sodium_init() < 0) {
@@ -114,6 +122,26 @@ bool LoginManager::loadLicense(const QUrl &fileUrl) {
     QByteArray hashBytes(reinterpret_cast<const char*>(jsonHash), sizeof(jsonHash));
     qDebug() << "JSON hash:" << hashBytes;
 
+    //signature verification
+    //verifying that the signature length matches the Ed25519 standard
+    if (signature.size() != crypto_sign_BYTES) {
+        qDebug() << "Invalid signature length.";
+        return false;
+    }
+
+    int signatureResult = crypto_sign_verify_detached(reinterpret_cast<const unsigned char*>(signature.constData()),
+                                                        jsonHash,
+                                                        sizeof(jsonHash),
+                                                      reinterpret_cast<const unsigned char*> (PUBLIC_LICENSE_KEY.constData())
+                                                        );
+
+    if (signatureResult != 0) {
+        qDebug() << "signature verification failed.";
+        return false;
+    }
+
+    qDebug() << "signature verified successfully.";
+
     //JSON to QList<User>
     QJsonDocument doc = QJsonDocument::fromJson(decryptedJson);
     if (doc.isObject()) {
@@ -140,7 +168,7 @@ bool LoginManager::login(const QString& id, const QString& password) {
             QByteArray enteredPassword = password.toUtf8();
             QByteArray storedhashedPassword = user.getPasswordHash().toUtf8();
 
-            //test!!
+            //REMOVE LATER!!!
             qDebug() << "stored hash:" << user.getPasswordHash();
             qDebug() << "password:" << password;
 
