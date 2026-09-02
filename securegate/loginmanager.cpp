@@ -143,13 +143,13 @@ bool LoginManager::loadLicense(const QUrl &fileUrl) {
     qDebug() << "signature verified successfully.";
 
     //JSON to QList<User>
-    QJsonDocument doc = QJsonDocument::fromJson(decryptedJson);
+    QJsonDocument doc = QJsonDocument::fromJson(licenseDataBytes);
     if (doc.isObject()) {
         QJsonObject obj = doc.object();
         expiryDate = obj["expiryDate"].toString();
     }
 
-    users = reader.parseUsersFromJson(decryptedJson);
+    users = reader.parseUsersFromJson(licenseDataBytes);
 
     if (users.isEmpty()) {
         qDebug() << "could NOT find user info.";
