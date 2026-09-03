@@ -5,11 +5,14 @@ QT += quick quickcontrols2
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-        main.cpp
+        main.cpp \
+        licensemanager.cpp
 
 HEADERS += \
         licensemanager.h \
-        shared_license_key.h
+        private_license_key.h \
+        shared_license_key.h \
+        private_license_key.h
 
 RESOURCES += qml.qrc
 

@@ -14,6 +14,14 @@ static const unsigned char LICENSE_KEY[crypto_aead_xchacha20poly1305_ietf_KEYBYT
     0x88, 0x99, 0xaa, 0xbb,  0xcc, 0xdd, 0xee, 0xff
 };
 
+
+// ── PUBLIC KEY (Ed25519) for Signature Verification ──────────────────────────
+// This key is used by the LOGIN APP to verify the authenticity of the license.
+// ─────────────────────────────────────────────────────────────────────────────
+static const QByteArray PUBLIC_LICENSE_KEY = QByteArray::fromHex("9ce421d7156e348a0864ad240913e65e6b06b51deac9820feaf241f690fc98f0");
+
+
+
 //libsodium control
 LoginManager::LoginManager() : QObject() {
     if (sodium_init() < 0) {
@@ -26,7 +34,7 @@ bool LoginManager::loadLicense(const QUrl &fileUrl) {
     QString filePath = fileUrl.toLocalFile();
     if (filePath.isEmpty()) {
         filePath = fileUrl.toString(); //fallback
-    }
+}
 
     //read the file as encrypted
     FileReader reader;
@@ -76,20 +84,72 @@ bool LoginManager::loadLicense(const QUrl &fileUrl) {
         );
 
     if (result != 0) {
-        qDebug() << "encryption failed.";
+        qDebug() << "decryption failed.";
         return false;
     }
 
     decryptedJson.resize(decrypted_len);
 
-    QJsonDocument doc = QJsonDocument::fromJson(decryptedJson);
-    if (doc.isObject()) {
-        QJsonObject obj = doc.object();
-        expiryDate = obj["expiryDate"].toString(); // Tarihi değişkene kaydettik
+    //parsing the decrypted license as JSON
+    QJsonDocument finalDoc = QJsonDocument::fromJson(decryptedJson);
+    if (finalDoc.isNull() || !finalDoc.isObject()){
+        qDebug() << "invalid license package.";
+        return false;
+    }
+    QJsonObject finalSignedJson = finalDoc.object();
+
+    //final signed json = license data + signature
+    QJsonObject licenseJson = finalSignedJson["licenseData"].toObject();
+    QString signatureHex = finalSignedJson["signature"].toString();
+
+    //converting the signature: hex -> raw bytes
+    QByteArray signature = QByteArray::fromHex(signatureHex.toUtf8());
+
+    //converting license data to bytes for hashing
+    QByteArray licenseDataBytes = QJsonDocument(licenseJson).toJson(QJsonDocument::Compact);
+
+    //JSON hashing for data integrity
+    //hashing JSON
+    unsigned char jsonHash[crypto_generichash_BYTES];
+    if (crypto_generichash(jsonHash, sizeof(jsonHash),
+                       reinterpret_cast<const unsigned char*>(licenseDataBytes.constData()),
+                           licenseDataBytes.size(), nullptr, 0) != 0){
+        qDebug() << "JSON hashing failed.";
+        return false;
     }
 
+    //TEST!!
+    QByteArray hashBytes(reinterpret_cast<const char*>(jsonHash), sizeof(jsonHash));
+    qDebug() << "JSON hash:" << hashBytes;
+
+    //signature verification
+    //verifying that the signature length matches the Ed25519 standard
+    if (signature.size() != crypto_sign_BYTES) {
+        qDebug() << "Invalid signature length.";
+        return false;
+    }
+
+    int signatureResult = crypto_sign_verify_detached(reinterpret_cast<const unsigned char*>(signature.constData()),
+                                                        jsonHash,
+                                                        sizeof(jsonHash),
+                                                      reinterpret_cast<const unsigned char*> (PUBLIC_LICENSE_KEY.constData())
+                                                        );
+
+    if (signatureResult != 0) {
+        qDebug() << "signature verification failed.";
+        return false;
+    }
+
+    qDebug() << "signature verified successfully.";
+
     //JSON to QList<User>
-    users = reader.parseUsersFromJson(decryptedJson);
+    QJsonDocument doc = QJsonDocument::fromJson(licenseDataBytes);
+    if (doc.isObject()) {
+        QJsonObject obj = doc.object();
+        expiryDate = obj["expiryDate"].toString();
+    }
+
+    users = reader.parseUsersFromJson(licenseDataBytes);
 
     if (users.isEmpty()) {
         qDebug() << "could NOT find user info.";
@@ -100,10 +160,27 @@ bool LoginManager::loadLicense(const QUrl &fileUrl) {
     return true;
 }
 
+//password hashing for password security
+//checking the ID and verifying the hashed password
 bool LoginManager::login(const QString& id, const QString& password) {
     for (const User& user : users) {
-        if (user.getID() == id && user.getPassword() == password) {
-            return true;
+        if (user.getID() == id) {
+            QByteArray enteredPassword = password.toUtf8();
+            QByteArray storedhashedPassword = user.getPasswordHash().toUtf8();
+
+            //REMOVE LATER!!!
+            qDebug() << "stored hash:" << user.getPasswordHash();
+            qDebug() << "password:" << password;
+
+            //automatically hashes and verifies the entered password
+            int result = crypto_pwhash_str_verify(storedhashedPassword.constData(), enteredPassword.constData(), enteredPassword.size());
+            qDebug() << "result:" << result;
+
+            // == 0 for verified, != 0 for not verified
+            if (result == 0){
+                return true;
+            }
+            return false;
         }
     }
     return false;
