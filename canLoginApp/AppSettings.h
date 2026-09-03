@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QUrl>
-#include "AppConfig.h"
+#include <QString>
 
 // ── AppSettings ───────────────────────────────────────────────────────────────
 // QObject wrapper around AppConfig, exposed to QML as "AppSettings".
@@ -21,26 +21,14 @@ class AppSettings : public QObject
     Q_PROPERTY(QString licenseDir READ licenseDir NOTIFY licenseDirChanged)
 
 public:
-    explicit AppSettings(QObject *parent = nullptr) : QObject(parent) {}
+    explicit AppSettings(QObject *parent = nullptr);
 
     // Returns the currently configured license directory path.
-    QString licenseDir() const
-    {
-        return AppConfig::instance().licenseDir;
-    }
+    QString licenseDir() const;
 
     // Accepts the QUrl that FolderDialog.selectedFolder returns,
     // converts it to a local filesystem path, persists it, and notifies QML.
-    Q_INVOKABLE void setLicenseDirFromUrl(const QUrl &url)
-    {
-        const QString path = url.toLocalFile();
-        if (path.isEmpty() || path == AppConfig::instance().licenseDir)
-            return;
-
-        AppConfig::instance().licenseDir = path;
-        AppConfig::instance().save();
-        emit licenseDirChanged();
-    }
+    Q_INVOKABLE void setLicenseDirFromUrl(const QUrl &url);
 
 signals:
     void licenseDirChanged();

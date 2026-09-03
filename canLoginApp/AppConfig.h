@@ -2,29 +2,19 @@
 #define APPCONFIG_H
 
 #include <QString>
-#include <QSettings>
 
 class AppConfig {
 public:
-    static AppConfig& instance() {
-        static AppConfig single;
-        return single;
-    }
+    static AppConfig& instance();
 
     QString licenseDir;
 
     // Persist current values to QSettings.
-    void save() {
-        QSettings s("testQtProject", "LoginApp");
-        s.setValue("licenseDir", licenseDir);
-    }
+    void save();
 
 private:
     // Load saved values on first construction.
-    AppConfig() {
-        QSettings s("testQtProject", "LoginApp");
-        licenseDir = s.value("licenseDir", QString()).toString();
-    }
+    AppConfig();
 
     AppConfig(const AppConfig&)            = delete;
     AppConfig& operator=(const AppConfig&) = delete;
