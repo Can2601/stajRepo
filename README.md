@@ -15,3 +15,11 @@
 - [x] Lisans uygulamasında private ile hash imzalanacak
 - [x] Login uygulamasında lisansın imzası Public key ile çözülecek, daha sonra lisans hash'i ile karşılaştırılacak
 - [x] Private key'in projede nasıl tutulacağı araştırılacak
+xor olayinin ornegi ile birlikte  yazilacak
+
+Key icin obfuscateion fonksyousnu yazilacak *proje disinda
+obfuscate edilmis key projeye yazilacak
+proje icine deobfuscate fonk yazilacak
+isbeing debugged fonskiyonu ile debug engellenecek
+vmprotect demosunu indirip exeyi korumaya al
+test etmeye calis
