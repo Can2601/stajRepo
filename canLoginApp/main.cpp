@@ -14,9 +14,8 @@
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN
-    // Basic anti-debugging protection
     if (IsDebuggerPresent()) {
-        return -1; // Exit silently if debugger is attached
+        return -1;
     }
 #endif
 
