@@ -44,7 +44,9 @@ bool LicenseAuth::validateCredentials(const QString &id, const QString &password
     //    Any tampering with the encrypted bundle is caught here by the Poly1305 MAC.
     std::string plaintext;
     try {
-        plaintext = decrypt(bundle, LICENSE_KEY);
+        unsigned char deobfuscatedOne[crypto_aead_xchacha20poly1305_ietf_KEYBYTES];
+        deobfuscate(LICENSE_KEY, deobfuscatedOne);
+        plaintext = decrypt(bundle, deobfuscatedOne);
     } catch (const std::exception &e) {
         m_lastError = QString("Decryption failed: %1").arg(e.what());
         return false;

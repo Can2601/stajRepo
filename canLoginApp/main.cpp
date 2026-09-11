@@ -2,6 +2,10 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 #include "licenseauth.h"
 #include "recentlogins.h"
 #include "AppConfig.h"
@@ -9,6 +13,13 @@
 
 int main(int argc, char *argv[])
 {
+#ifdef Q_OS_WIN
+    // Basic anti-debugging protection
+    if (IsDebuggerPresent()) {
+        return -1; // Exit silently if debugger is attached
+    }
+#endif
+
     QGuiApplication app(argc, argv);
     app.setOrganizationName("testQtProject");
     app.setApplicationName("LoginApp");
