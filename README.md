@@ -26,8 +26,10 @@
 - [ ] test etmeye calis
 
 
-
-
+ UPX ile calisma mantigi ogren koddlari incele
+ exe'ye uygulanip ghidra ve x64ddbg de bak makrolara 
+ guncelleme yollarini arastirip ozellestirmeyi arastir
+ zor degilse kendi halini yaz 
 
 
 
