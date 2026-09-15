@@ -7,11 +7,11 @@ AppConfig& AppConfig::instance() {
 }
 
 void AppConfig::save() {
-    QSettings s("testQtProject", "LoginApp");
+    QSettings s("licensegate", "licensegate");
     s.setValue("licenseDir", licenseDir);
 }
 
 AppConfig::AppConfig() {
-    QSettings s("testQtProject", "LoginApp");
+    QSettings s("licensegate", "licensegate");
     licenseDir = s.value("licenseDir", QString()).toString();
 }

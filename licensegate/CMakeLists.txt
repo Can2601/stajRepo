@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(testQtProject VERSION 0.1 LANGUAGES CXX)
+project(licensegate VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,7 +19,7 @@ if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/importedcontent/CMakeLists.txt")
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/importedcontent)
 endif()
 
-qt_add_executable(apptestQtProject
+qt_add_executable(applicensegate
     main.cpp
     licenseauth.cpp
     licenseauth.h       # Q_OBJECT – MOC must process this
@@ -35,30 +35,30 @@ qt_add_executable(apptestQtProject
     public_license_key.h
 )
 
-qt_add_qml_module(apptestQtProject
-    URI testQtProject
+qt_add_qml_module(applicensegate
+    URI licensegate
     QML_FILES
         Main.qml
         LoginPage.qml
         WelcomePage.qml
 )
 
-set_target_properties(apptestQtProject PROPERTIES
-#    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.apptestQtProject
+set_target_properties(applicensegate PROPERTIES
+#    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.applicensegate
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
 
-target_include_directories(apptestQtProject PRIVATE ${SODIUM_ROOT}/include)
-target_link_libraries(apptestQtProject
+target_include_directories(applicensegate PRIVATE ${SODIUM_ROOT}/include)
+target_link_libraries(applicensegate
     PRIVATE Qt6::Quick
     PRIVATE Qt6::QuickDialogs2
     PRIVATE ${SODIUM_ROOT}/lib/libsodium.a
 )
 
-install(TARGETS apptestQtProject
+install(TARGETS applicensegate
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

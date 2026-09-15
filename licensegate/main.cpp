@@ -20,8 +20,8 @@ int main(int argc, char *argv[])
 #endif
 
     QGuiApplication app(argc, argv);
-    app.setOrganizationName("testQtProject");
-    app.setApplicationName("LoginApp");
+    app.setOrganizationName("licensegate");
+    app.setApplicationName("licensegate");
 
     // Expose LicenseAuth to QML as a context property.
     // QML calls: LicenseAuth.validateCredentials(id, pwd)
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         &app,
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
-    engine.loadFromModule("testQtProject", "Main");
+    engine.loadFromModule("licensegate", "Main");
 
     return QGuiApplication::exec();
 }

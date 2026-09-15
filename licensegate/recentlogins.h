@@ -9,7 +9,7 @@
 // app restarts.
 //
 // Save location (set by Qt via QStandardPaths + org/app name in main.cpp):
-//   Windows: C:/Users/<user>/AppData/Local/testQtProject/LoginApp/recent_logins.json
+//   Windows: C:/Users/<user>/AppData/Local/licensegate/licensegate/recent_logins.json
 //
 // File format:
 //   {

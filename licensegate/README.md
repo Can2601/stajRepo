@@ -1,6 +1,6 @@
-# CanLoginApp (License Client Application)
+# Licensegate (License Client Application)
 
-`CanLoginApp` is a secure, Qt Quick (QML) based login application designed to work in tandem with a separate license generator (`license_app`). It performs robust, offline cryptographic validation of `.lic` license files to authenticate users and verify their permissions.
+`Licensegate` is a secure, Qt Quick (QML) based login application designed to work in tandem with a separate license generator (`license_app`). It performs robust, offline cryptographic validation of `.lic` license files to authenticate users and verify their permissions.
 
 ## Features
 
