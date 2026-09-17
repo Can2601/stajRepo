@@ -14,6 +14,8 @@
 // In production this would be obfuscated / loaded from a secure store.
 // For learning purposes it is hardcoded here.
 // ─────────────────────────────────────────────────────────────────────────────
+
+
 static const unsigned char LICENSE_KEY[crypto_aead_xchacha20poly1305_ietf_KEYBYTES] = {
     0x04, 0xae, 0xf5, 0xed, 0x1c, 0x28, 0xcb, 0x68, 
     0x00, 0xe2, 0xf5, 0x19, 0x15, 0x23, 0x27, 0xbc,

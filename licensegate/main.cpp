@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
+
     QGuiApplication app(argc, argv);
     app.setOrganizationName("licensegate");
     app.setApplicationName("licensegate");
@@ -29,7 +30,11 @@ int main(int argc, char *argv[])
     LicenseAuth  licenseAuth;
     RecentLogins recentLogins;
     AppSettings  appSettings;
-
+    #ifdef Q_OS_WIN
+        if (IsDebuggerPresent()) {
+            return -1;
+        }
+    #endif
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("LicenseAuth",  &licenseAuth);
     engine.rootContext()->setContextProperty("RecentLogins", &recentLogins);
