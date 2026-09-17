@@ -17,19 +17,19 @@
 - [x] Private key'in projede nasıl tutulacağı araştırılacak
 
 ## V3 
-- [ ] xor olayinin ornegi ile birlikte  yazilacak
-- [ ] Key icin obfuscateion fonksyousnu yazilacak *proje disinda
-- [ ] obfuscate edilmis key projeye yazilacak
-- [ ] proje icine deobfuscate fonk yazilacak
-- [ ] isbeing debugged fonskiyonu ile debug engellenecek
-- [ ] vmprotect demosunu indirip exeyi korumaya al
-- [ ] test etmeye calis
+- [x] xor olayinin ornegi ile birlikte  yazilacak
+- [x] Key icin obfuscateion fonksyousnu yazilacak *proje disinda
+- [x] obfuscate edilmis key projeye yazilacak
+- [x] proje icine deobfuscate fonk yazilacak
+- [x] isbeing debugged fonskiyonu ile debug engellenecek
+- [x] vmprotect demosunu indirip exeyi korumaya al
+- [x] test etmeye calis
 
-
- UPX ile calisma mantigi ogren koddlari incele
- exe'ye uygulanip ghidra ve x64ddbg de bak makrolara 
- guncelleme yollarini arastirip ozellestirmeyi arastir
- zor degilse kendi halini yaz 
+#V4
+ - [ ] UPX ile calisma mantigi ogren koddlari incele
+ - [ ] UPX'i exe'ye uygulayip makrolara ghidra ve x64ddbg de bak  
+ - [ ] guncelleme yollarini arastirip ozellestirmeyi arastir
+ - [ ] zor degilse kendi halini yaz 
 
 
 
